@@ -3,7 +3,7 @@
 
 % Prints a list of strings or atoms
 printList([]) -> empty_list;
-printList([H|[]]) -> io:format("~s~n",[H]);
+printList([H|[]]) -> io:format("~p~n",[H]);
 printList([H|T]) ->
-    io:format("~s, ",[H]),
+    io:format("~p, ",[H]),
     printList(T).
