@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-erlc server.erl
+erl -compile server node project utils
 
