@@ -1,21 +1,6 @@
 -module(node).
--import(utils, [printList/1]).
+-import(utils, [printList/1, select_view/5, permute/1, move_oldest/2, select_peer/2, head/2, increase_age/1]).
 -export([listen/7, join/1, getNeigs/2]). 
-
-permute(X) ->
-    [Y||{_,Y} <- lists:sort([ {rand:uniform(), N} || N <- X])].
-
-move_oldest(View, H) ->
-    todo.
-
-select_peer(View, Peer_selection) ->
-    todo.
-
-head(View, C) ->
-    todo.
-
-increase_age(View) ->
-    todo.
 
 join(BootServerPid) ->
     BootServerPid ! { add, self() },
@@ -43,8 +28,12 @@ listen(MyId, View, Pull, C, Peer_Selection, H, S) ->
             Moved_oldest_view = move_oldest(Permuted_view, H),
             Appended_buffer = Buffer ++ head(Moved_oldest_view, C),
             P_pid ! {doPassive, {{MyId, self()}, Appended_buffer}},
-            Inc_view = increase_age(Moved_oldest_view),
-            listen(MyId, Inc_view, Pull,  C, Peer_Selection, H, S);
+            if Pull ->
+                listen(MyId, Moved_oldest_view, Pull,  C, Peer_Selection, H, S);
+            true ->
+                Inc_view = increase_age(Moved_oldest_view),
+                listen(MyId, Inc_view, Pull,  C, Peer_Selection, H, S)
+            end;
 
         {doPassive, {{Received_id, Received_pid}, Received_buffer}} ->
             if Pull ->
@@ -65,23 +54,3 @@ listen(MyId, View, Pull, C, Peer_Selection, H, S) ->
 
         stop -> ok
     end.
-
-select_view(View, C, H, S, Buffer) ->
-    Appended_view = View ++ Buffer,
-    Removed_duplicate_view = remove_duplicate(Appended_view),
-    Removed_old_view = remove_old(Removed_duplicate_view, lists:min([H, (length(Removed_duplicate_view) - C)])),
-    Removed_head = remove_head(Removed_old_view, lists:min([S, (length(Removed_old_view) - C)])),
-    Removed_random = remove_at_random(Removed_head, (length(Removed_head) - C)),
-    Removed_random.
-
-remove_duplicate(View) ->
-    todo.
-
-remove_old(View, NbToRemove) ->
-    todo.
-
-remove_head(View, NbToRemove) ->
-    todo.
-
-remove_at_random(View, NbToRemove) ->
-    todo.
