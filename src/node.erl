@@ -1,6 +1,6 @@
 -module(node).
 -import(utils, [printList/1, select_view/5, permute/1, move_oldest/2, select_peer/2, head/2, increase_age/1]).
--export([listen/7, join/1, getNeigs/2]). 
+-export([init/5, join/1, getNeigs/2]). 
 
 join(BootServerPid) ->
     BootServerPid ! { add, self() },
@@ -53,4 +53,9 @@ listen(MyId, View, Pull, C, Peer_Selection, H, S) ->
             listen(MyId, Inc_view, Pull,  C, Peer_Selection, H, S);
 
         stop -> ok
+    end.
+
+init(Pull, C, Peer_Selection, H, S) ->
+    receive {setId, Id} ->
+        listen(Id, [], Pull, C, Peer_Selection, H, S)
     end.

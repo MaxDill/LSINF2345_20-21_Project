@@ -61,14 +61,20 @@ select_view(View, C, H, S, Buffer) ->
     Removed_random = remove_at_random(Removed_head, (length(Removed_head) - C)),
     Removed_random.
 
-remove_duplicate(View) ->
-    todo.
+remove_duplicate([]) -> [];
+remove_duplicate([H|T]) -> [H | [X || X <- remove_duplicate(T), X /= H]].
 
+% utils:remove_old([{1,11,5},{2,22,3},{3,33,8}], 2).
 remove_old(View, NbToRemove) ->
-    todo.
+    Sorted_age = lists:keysort(3, View),
+    Elem_to_remove = lists:sublist(Sorted_age, length(Sorted_age)-NbToRemove+1, length(Sorted_age)),
+    delete_all_in(View, Elem_to_remove).
 
 remove_head(View, NbToRemove) ->
-    todo.
+    lists:sublist(View, length(View)-NbToRemove+1, length(View)).
 
+% utils:remove_at_random([{1,11,5},{2,22,3},{3,33,8}], 1).
 remove_at_random(View, NbToRemove) ->
-    todo.
+    Shuffled_view = permute(View),
+    Elem_to_remove = lists:sublist(Shuffled_view, length(Shuffled_view)-NbToRemove+1, length(Shuffled_view)),
+    delete_all_in(View, Elem_to_remove).
