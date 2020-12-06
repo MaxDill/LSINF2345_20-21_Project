@@ -7,21 +7,19 @@ findPidFromId(_, []) -> notfound;
 findPidFromId(LookFor, [{Id, Pid}|_]) when LookFor =:= Id -> Pid;
 findPidFromId(LookFor, [{Id, _}|T]) when LookFor =/= Id -> findPidFromId(LookFor, T).
 
-makeNet(N, BootServerPid, Pull, C, Peer_Selection, H, S) -> makeNet(N, BootServerPid, [], 0, Pull, C, Peer_Selection, H, S).
+makeNet(N, BootServerPid, Pull, C, Peer_Selection, H, S) -> makeNet(N, BootServerPid, 0, Pull, C, Peer_Selection, H, S).
 
-makeNet(N, BootServerPid, Net, Counter, Pull, C, Peer_Selection, H, S) ->
+makeNet(N, BootServerPid, Counter, Pull, C, Peer_Selection, H, S) ->
   NodePid = spawn(node, init, [Pull, C, Peer_Selection, H, S]), % Create a new node with an empty view
-  NodeId = node:join(BootServerPid), % Add it to the network
-  NodePid ! {setId, NodeId},
-  Node = { NodeId, NodePid },
+  BootServerPid ! {add, NodePid}, % Add it to the network
   if
     N =/= Counter + 1 ->
-      makeNet(N, BootServerPid, Net ++ [ Node ], Counter + 1, Pull, C, Peer_Selection, H, S);
+      makeNet(N, BootServerPid, Counter + 1, Pull, C, Peer_Selection, H, S);
     N =:= Counter + 1 ->
-      Net ++ [ Node ]
+      BootServerPid ! print
   end.
 
-% Launches a scenario for the gossip algorithm
+% Launches a network
 % Paramaters are : 
 % N, the number of nodes in the network,
 % Timer, the time in milliseconds of each cycle,
@@ -34,18 +32,19 @@ makeNet(N, BootServerPid, Net, Counter, Pull, C, Peer_Selection, H, S) ->
 launch(N, Timer, Pull, C, View_selection, Peer_Selection) ->
   BootServerPid = spawn(server, listen, [ 0, [] ]),
   io:format("Server pid is ~p~n", [BootServerPid]),
-  Network = launch(N, Timer, BootServerPid, Pull, C, View_selection, Peer_Selection),
-  io:format("Network successfuly created : ", []),
-  utils:printList(Network).
-  
+  % Phase 1 : initialize 40 % of nodes
+  createNetwork(floor(N*0.4), BootServerPid, Pull, C, View_selection, Peer_Selection),
+  % Phase 2 : set initial view to all the initialized nodes
+  BootServerPid ! {initializeView, all},
+  done.
 
-launch(N, Timer, BootServerPid, Pull, C, View_selection, Peer_Selection) ->
+createNetwork(N, BootServerPid, Pull, C, View_selection, Peer_Selection) ->
   if View_selection =:= blind ->
     makeNet(N, BootServerPid, Pull, C, Peer_Selection, 0, 0);
   View_selection =:= healer ->
-    makeNet(N, BootServerPid, Pull, C, Peer_Selection, C/2, 0);
+    makeNet(N, BootServerPid, Pull, C, Peer_Selection, ceil(C/2), floor(C/2));
   View_selection =:= swapper ->
-    makeNet(N, BootServerPid, Pull, C, Peer_Selection, 0, C/2);
+    makeNet(N, BootServerPid, Pull, C, Peer_Selection, floor(C/2), ceil(C/2));
   true ->
     throw("Invalid View_selection parameter")
   end.
