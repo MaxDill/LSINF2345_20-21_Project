@@ -2,5 +2,5 @@
 
 cd src
 
-erl -compile server node project utils
+erl -compile server node project utils logging
 
