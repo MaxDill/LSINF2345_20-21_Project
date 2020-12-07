@@ -44,19 +44,18 @@ launch(N, Timer, Pull, C, View_selection, Peer_selection) ->
   BootServerPid ! {initializeView, N_40 - 1}, % Initialize the view for all nodes after index N_40 - 1 (= all freshly created nodes)
   BootServerPid ! {activate, N_40 - 1},
 
-  LoggingPid ! {write, "logs.txt"},
-
-
-  startCycles(30, Timer, BootServerPid),
+  startCycles(10, Timer, BootServerPid),
   createNetwork(N_20, BootServerPid, Pull, C, View_selection, Peer_selection, LoggingPid),
   BootServerPid ! {initializeView, N_40 + N_20 - 1},
   BootServerPid ! {activate, N_40 + N_20 - 1},
 
-  startCycles(30, Timer, BootServerPid),
+  startCycles(10, Timer, BootServerPid),
   createNetwork(N_20, BootServerPid, Pull, C, View_selection, Peer_selection, LoggingPid),
   BootServerPid ! {initializeView, N_40 + N_20 + N_20 - 1},
   BootServerPid ! {activate, N_40 + N_20 + N_20 - 1},
-  startCycles(30, Timer, BootServerPid),
+  startCycles(10, Timer, BootServerPid),
+
+  LoggingPid ! {write, "logs.txt"},
 
   done.
 

@@ -60,8 +60,6 @@ select_view(View, C, H, S, Buffer) ->
     Removed_duplicate_view = remove_duplicate(Appended_view),
     Removed_old_view = remove_old(Removed_duplicate_view, lists:min([H, (length(Removed_duplicate_view) - C)])),
     Removed_head = remove_head(Removed_old_view, lists:min([S, (length(Removed_old_view) - C)])),
-    % ERROR HERE Removed_head is empty
-    printList(Removed_head),
     Removed_random = remove_at_random(Removed_head, (length(Removed_head) - C)),
     Removed_random.
 
@@ -89,8 +87,8 @@ remove_old(View, NbToRemove) when NbToRemove >= 0 ->
     Elem_to_remove = lists:sublist(Sorted_age, length(Sorted_age)-NbToRemove+1, length(Sorted_age)),
     delete_all_in(View, Elem_to_remove).
 
-remove_head(View, NbToRemove) when NbToRemove < 0 -> View;
-remove_head(View, NbToRemove) when NbToRemove >= 0 ->
+remove_head(View, NbToRemove) when NbToRemove < 1 -> View;
+remove_head(View, NbToRemove) when NbToRemove >= 1 ->
     lists:sublist(View, length(View)-NbToRemove+1, length(View)).
 
 % utils:remove_at_random([{1,11,5},{2,22,3},{3,33,8}], 1).

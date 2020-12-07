@@ -3,12 +3,12 @@
 -export([init/6]). 
 
 listen(active, MyId, View, Pull, C, Peer_Selection, H, S, CycleNo, LoggingPid) ->
-    io:format("Node ~p is listening at cycle ~p~n", [MyId, CycleNo]),
+    %io:format("Node ~p is listening at cycle ~p~n", [MyId, CycleNo]),
     receive
         {doActivePush} ->
             LoggingPid ! {log, {CycleNo, MyId, View}},
             {P_id, P_pid, _} = select_peer(View, Peer_Selection),
-            io:format("Node ~p selected node ~p~n", [MyId, P_id]),
+            %io:format("Node ~p selected node ~p~n", [MyId, P_id]),
             Buffer = [{MyId, self(), 0}],
             Permuted_view = permute(View),
             Moved_oldest_view = move_oldest(Permuted_view, H, C),
@@ -22,7 +22,7 @@ listen(active, MyId, View, Pull, C, Peer_Selection, H, S, CycleNo, LoggingPid) -
             end;
 
         {doPassive, {{Received_id, Received_pid}, Received_buffer}} ->
-            LoggingPid ! {log, {CycleNo, MyId, View}},
+            %LoggingPid ! {log, {CycleNo, MyId, View}},
             if Pull ->
                 Buffer = [{MyId, self(), 0}],
                 Permuted_view = permute(View),
@@ -35,9 +35,7 @@ listen(active, MyId, View, Pull, C, Peer_Selection, H, S, CycleNo, LoggingPid) -
                 listen(active, MyId, Inc_view, Pull,  C, Peer_Selection, H, S, CycleNo, LoggingPid);
             true -> 
                 %io:format("Node ~p : FLAG 1~n",[MyId]),
-                LoggingPid ! {log, {888, MyId, Received_buffer}},
                 Selected_view = select_view(View, C, H, S, Received_buffer),
-                LoggingPid ! {log, {999, MyId, Selected_view}},
                 Inc_view = increase_age(Selected_view),
                 listen(active, MyId, Inc_view, Pull,  C, Peer_Selection, H, S, CycleNo, LoggingPid)
             end;
