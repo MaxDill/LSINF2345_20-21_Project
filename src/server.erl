@@ -2,7 +2,7 @@
 
 -module(server). 
 -export([listen/2]). 
--import(utils, [printList/1]).
+-import(utils, [printList/1, permute/1]).
 
 % Look for neighborgs for a specific Target ({Id, Pid})
 % server:lookForNeighborgs([{0, <0.84.0>}, {1, <0.85.0>}, {2, <0.86.0>}, {3, <0.87.0>}], {2, <0.86.0>}).
@@ -14,7 +14,7 @@ lookForNeighborgs(no_previous, [H|[]], Target) when H =:= Target -> []; % Elemen
 lookForNeighborgs(Previous, [H|[]], Target) when H =:= Target -> [Previous]; % Element found at the last position
 lookForNeighborgs(Previous, [H1|[H2|_]], Target) when H1 =:= Target -> [Previous,H2]. % Element find in the middle of the list
 
-% Initialize the view of every node in the network
+% Initialize the view of every node in the network to its neighborgs
 initAllView(Network) -> initAllView(Network, Network).
 initAllView([], _) -> initAllView_done;
 initAllView([{Id, Pid}|T], Network) ->
@@ -48,7 +48,7 @@ add_age_to_view([], Acc) -> Acc;
 add_age_to_view([{Id, Pid}|T], Acc) -> add_age_to_view(T, Acc ++ [{Id, Pid, 0}]).
 
 listen(NodeID, Network) ->
-   io:format("Bootstrap server is listening...~n", []),
+   %io:format("Bootstrap server is listening...~n", []),
    receive
 
       {add, Pid} -> 
@@ -73,10 +73,38 @@ listen(NodeID, Network) ->
          applyAll(Network, fun({_, Pid}) -> Pid ! {doActivePush} end),
          listen(NodeID, Network);
 
+      {crash, NbToCrash} ->
+         Permuted_network = permute(Network),
+         Nodes_to_crash = lists:sublist(Permuted_network, NbToCrash), % Select random nodes to crash
+         Alive_nodes = lists:sublist(Permuted_network, NbToCrash+1, length(Permuted_network)),
+         applyAll(Nodes_to_crash, fun({_, Pid}) -> Pid ! deactivate end),
+         listen_crash(NodeID, Network, Nodes_to_crash, Alive_nodes);
+
       print ->
          printList(Network),
          listen(NodeID, Network);
 
       stop -> server_stopped_ok
 
+   end.
+
+listen_crash(NodeID, Network, Crashed_nodes, Alive_nodes) ->
+   %io:format("Bootstrap server is listening...~n", []),
+   receive
+
+      recover ->
+         case Alive_nodes of [H|_] -> 
+            applyAll(Crashed_nodes, fun({_, Pid}) -> Pid ! {setView, add_age_to_view([H])} end),
+            applyAll(Crashed_nodes, fun({_, Pid}) -> Pid ! activate end),
+            listen(NodeID, Network);
+         [] ->
+            io:format("Cannot recover : all nodes in the network are dead", []),
+            server_stopped_error
+         end;
+
+      {doActive, all} ->
+         applyAll(Alive_nodes, fun({_, Pid}) -> Pid ! {doActivePush} end),
+         listen_crash(NodeID, Network, Crashed_nodes, Alive_nodes);
+
+      stop -> server_stopped_ok
    end.
