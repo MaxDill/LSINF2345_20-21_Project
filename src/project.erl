@@ -29,7 +29,7 @@ unit_test() ->
 
 
 % Launches a scenario (based on what is described in the instructions
-% Paramaters are : 
+% Paramaters are :
 % N, the number of nodes in the network,
 % NbOfCycle defines the total number of cycles for the scenario
 % Timer, the time in milliseconds of each cycle,
@@ -46,10 +46,10 @@ launch(N, NbOfCycles, Timer, Pull, C, View_selection, Peer_selection, LogsOutput
   io:format("Server pid is ~p~n", [BootServerPid]),
   io:format("Logging pid is ~p~n", [LoggingPid]),
   % We cut for the different phases
-  N_40 = floor(N*0.4), % 40% of N
-  N_20 = floor(N*0.2), % 20 % of N
-  N_60 = floor(N*0.6), % 60 % of N
-  Nb_Cycles_20 = floor(NbOfCycles/6), % 20% of NbOfCycles
+  N_40 = trunc(N*0.4), % 40% of N
+  N_20 = trunc(N*0.2), % 20 % of N
+  N_60 = trunc(N*0.6), % 60 % of N
+  Nb_Cycles_20 = trunc(NbOfCycles/6), % 20% of NbOfCycles
   % Phase 1 : initialize 40 % of nodes, then set initial view to all the initialized nodes, then activate all the nodes
   addToNetwork(N_40, BootServerPid, Pull, C, View_selection, Peer_selection, LoggingPid),
   BootServerPid ! {initializeView, all},
@@ -89,9 +89,9 @@ addToNetwork(N, BootServerPid, Pull, C, View_selection, Peer_Selection, LoggingP
   if View_selection =:= blind ->
     makeNet(N, BootServerPid, Pull, C, Peer_Selection, 0, 0, LoggingPid);
   View_selection =:= healer ->
-    makeNet(N, BootServerPid, Pull, C, Peer_Selection, ceil(C/2), floor(C/2), LoggingPid);
+    makeNet(N, BootServerPid, Pull, C, Peer_Selection, trunc(C/2)+1, trunc(C/2), LoggingPid);
   View_selection =:= swapper ->
-    makeNet(N, BootServerPid, Pull, C, Peer_Selection, floor(C/2), ceil(C/2), LoggingPid);
+    makeNet(N, BootServerPid, Pull, C, Peer_Selection, trunc(C/2), trunc(C/2)+1, LoggingPid);
   true ->
     throw("Invalid View_selection parameter")
   end.
